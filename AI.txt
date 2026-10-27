@@ -1,0 +1,23 @@
+AI used: Chatgpt
+
+Things done by me:
+
+Came up with the main idea and concept for the After the Rain – Streetlight Swarm simulation, including moth flocking around streetlights and avoiding moving buses.
+- Implemented the flocking rules: separation, alignment, and cohesion, to create coordinated group movement.
+- Implemented compute_student_acceleration() to calculate each moth's steering forces based on neighbors, streetlights, wind, boundaries, and obstacles.
+- Implemented steering_toward() to calculate steering forces toward target positions.
+- Implemented the spatial-grid neighbor search with AI's suggestion. I tried different techniques but faced challenges, and AI suggested using a uniform 3D spatial grid. The grid divides space into fixed-size cells, stores moth indices in each cell, and searches nearby cells for candidate neighbors instead of checking every moth. It uses a regular array rather than a hash function. The relevant functions are spatial_grid::rebuild() and spatial_grid::query(). Implementation was done by me.
+Implemented streetlight attraction, including distance-based influence and 3D steering toward active lights.
+- Developed the approach for handling moths colliding with buses by accounting for the moths' effective size and the buses' safety bounds.
+- Linear Algebra operations were mostly handled by me.
+- Implemented the buses' movement and position calculations, including their sinusoidal motion over time.
+- Implemented calculations that predict each bus’s position at multiple future time steps and compare them with each moth’s predicted position. This lets moths steer away when their paths are likely to intersect or come too close.
+
+Things done by AI:
+
+- Helped create the 3D bus, streetlights, street, road markings, sidewalks, and rainy nighttime atmosphere.
+- Helped implement the 3D moth shape, including its body, wings, and feelers, as well as the wing-flapping animation.
+- Helped implement the setup screen, simulation controls, streetlight controls, on-screen information, and camera orbit, pan, and zoom.
+- Helped with C++ syntax, Raylib function usage, and code structure when needed.
+- Helped debug (identify numerical values) issues involving moths running into buses and other minor bugs encountered during development.
+- Helped debug normalised3 function 

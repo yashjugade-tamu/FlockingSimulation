@@ -1,0 +1,126 @@
+AFTER THE RAIN: STREETLIGHT SWARM
+Math in Simple Language
+
+This note explains the main math in src/main.cpp. The numbers are simulation
+units, not meters. In the ground plane, 55 screen pixels equal one world unit.
+World x goes along the street, y is height, and z goes across the street.
+
+1. WHAT EACH MOTH KNOWS
+
+Each moth keeps track of where it is (position), which way it is moving
+(velocity), and how quickly its motion is changing (acceleration). Every frame,
+it looks at nearby moths, lights, and buses to decide how to change its motion.
+
+2. HOW THE FLOCK MOVES
+
+The program counts another moth as a neighbor when it is within 2.35 units.
+Each moth uses three simple ideas:
+
+Separation: do not crowd nearby moths. Within 0.52 units, a moth adds a push
+away from each neighbor. A closer neighbor creates a stronger push:
+
+    push away = direction away from neighbor / distance
+
+Alignment: turn toward the average direction of nearby moths. The code first
+averages their velocities, then steers toward that average direction.
+
+Cohesion: stay with the group. The code finds the average position of nearby
+moths, then steers toward it.
+
+For alignment and cohesion, “steer toward” means: choose a desired velocity,
+compare it with the moth's current velocity, and use the difference as an
+acceleration. The maximum desired speed is 2.25 units per second. The three
+rules are added together. Separation is multiplied by 1.8 * 1.6, alignment by
+0.8 * 1.15, and cohesion by 0.65. These weights set how strongly each rule
+matters. If a moth has no neighbors, alignment and cohesion do nothing.
+
+3. HOW LIGHT ATTRACTS MOTHS
+
+In cycle mode, one lamp turns on at a time, moving from the first lamp to the
+last and then starting over. In manual mode, you choose which lamps are on.
+In both modes, moths are attracted to lamps that are on. No Attraction mode
+turns off this pull.
+
+The light pull gets weaker with distance. A lamp only affects a moth when it is
+between 1 and 9.5 units away. For a lamp at distance r, its influence is
+
+    influence = (1 - r / 9.5) / (1 + r / 2.8)
+
+This value gets smaller as r gets larger. The moth combines the directions to
+the active lamps, giving more weight to lamps with greater influence, then
+steers toward the combined direction. The steering tries to bring the moth
+toward the lamp, but does not make it instantly jump there.
+
+4. WIND AND STEERING LIMITS
+
+Wind gently pushes moths along the street. It tries to bring their sideways
+speed toward 12/55 units per second. The wind force is deliberately small.
+
+The flock, light, wind, and obstacle accelerations are added together. If the
+total acceleration gets larger than 5.8 units per second squared, the program
+shortens it while keeping its direction. Moth speed is also capped at 2.25
+units per second.
+
+5. HOW MOTHS AVOID BUSES
+
+Before moving, the program predicts where each moth and bus will be at six
+points over the next second. A moth's prediction follows its current velocity.
+A bus's prediction follows its sine-wave lane motion, including its future
+direction and speed. This can reveal paths that will cross even when a bus is
+not close to the moth right now. For steering, the bus box is enlarged by 0.9
+units on its sides and above the roof. This gives a moth room to turn early.
+
+If the future point is inside or very close to this enlarged box, the moth
+steers away from the nearest part of the box. This steering force is scaled by
+3.4 * 1.4, then added to its flocking and other forces. The desired escape
+velocity includes the bus's predicted velocity, so the moth steers away from
+where the bus is moving.
+
+There is also a safety check after each movement step. If a moth's center or
+wings end up inside the bus safety box (expanded by 0.45 units), the program
+moves it out through the nearest side or
+above the roof and gives it a small velocity pointing outward. Moths cannot
+escape underneath the bus because the street is their lower boundary. This
+second check is a custom safeguard for cases where steering alone is not fast
+enough, including crowded flocks.
+
+The book discusses obstacle avoidance using potential fields and steering in
+Chapter 5, and steering around obstacles in flocking in Chapter 6. This project
+uses those general ideas, with its own bus-box steering and overlap safeguard.
+
+6. HOW THE MOTHS MOVE EACH FRAME
+
+The program uses semi-implicit Euler integration. In simple terms, it first
+changes a moth's velocity using acceleration, then moves it using that updated
+velocity:
+
+    new velocity = old velocity + acceleration * time step
+    new position = old position + new velocity * time step
+
+The time step is the small amount of time for one update (at most 0.025
+seconds). This method is simple and works well for this loose, gently changing
+motion. It is the update order shown in Equation 2.4 of House and Keyser.
+
+Explicit Euler is slightly different: it moves the moth using its old velocity
+before acceleration changes the velocity. This program does not use that
+position update.
+
+After moving, moths bounce off the height and street-depth limits. At the left
+and right ends of the flight area, they wrap to the other side. In No Attraction
+mode, moths stay at or below 3.0 units high so they continue flying near the
+street and buses. In the light-attraction modes, they can rise as high as 5.2
+units toward the lamps.
+
+7. HOW THE SPATIAL GRID HELPS
+
+The program divides the space into small 2-unit boxes. Each moth is stored in
+the box where it is flying. To find neighbors, it checks only boxes near that
+moth, then measures the exact distance to the possible neighbors. This saves
+work when there are many moths; it does not change how the flocking rules work.
+
+8. BOOK REFERENCE
+
+Donald H. House and John C. Keyser, Foundations of Physically Based Modeling
+and Animation, CRC Press, 2017. Relevant topics include Euler updates
+(Chapter 2, Equation 2.4), collision avoidance (Chapter 5, Section 5.3), and
+flocking (Chapter 6, including Section 6.5.4 on obstacle steering).
